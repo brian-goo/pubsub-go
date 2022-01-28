@@ -1,0 +1,25 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ws</title>
+</head>
+<body>
+    <script>
+        const ws = new WebSocket('ws://localhost:5000/ws')
+        ws.onopen = e => {
+            console.log('open')
+            ws.send(`hello from clent ${new Date().getTime()}`)
+            // setInterval(() => {
+            //     ws.send('hello from clent')
+            // }, 2000);
+        }
+        ws.onclose = e => {
+            console.log('close')
+        }
+        ws.onmessage = e => console.log(e.data)
+        ws.onerror = e => console.log(e.data)
+    </script>
+</body>
+</html>
