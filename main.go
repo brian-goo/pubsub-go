@@ -16,6 +16,7 @@ var rd = redis.NewClient(&redis.Options{
 var ctx = context.Background()
 
 // should handle more errors
+// deadlock condition?
 func echo(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -24,20 +25,54 @@ func echo(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
+	room := make(chan string)
+	start := make(chan string)
+
 	go func() {
 	loop:
 		for {
-			sub := rd.Subscribe(ctx, "test-channel")
-			ch := sub.Channel()
+			// channel := <-room
 
-			// should break outer for loop if err
-			for msg := range ch {
-				err := conn.WriteMessage(websocket.TextMessage, []byte(msg.Payload))
-				if err != nil {
-					log.Println("websocket write err:", err)
-					break loop
+			// sub := rd.Subscribe(ctx, channel)
+			// subCh := sub.Channel()
+			// defer sub.Close()
+
+			// start <- "ok"
+
+			// for msg := range subCh {
+			// 	err := conn.WriteMessage(websocket.TextMessage, []byte(msg.Payload))
+			// 	if err != nil {
+			// 		log.Println("websocket write err:", err)
+			// 		break loop
+			// 	}
+			// }
+
+			// -----------------------------
+			sub := rd.Subscribe(ctx)
+			// subCh := sub.Channel()
+			defer sub.Close()
+
+			for {
+				select {
+				case channel := <-room:
+					log.Println("channel", channel)
+					sub = rd.Subscribe(ctx, channel)
+					// _, err := sub.Receive(ctx)
+					// if err != nil {
+					// 	log.Println("redis sub connection err:", err)
+					// 	break loop
+					// }
+					start <- "ok"
+				case msg := <-sub.Channel():
+					log.Println("msg", msg)
+					err := conn.WriteMessage(websocket.TextMessage, []byte(msg.Payload))
+					if err != nil {
+						log.Println("websocket write err:", err)
+						break loop
+					}
 				}
 			}
+
 		}
 	}()
 
@@ -49,7 +84,12 @@ func echo(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Println(string(msg))
 
-		if err := rd.Publish(ctx, "test-channel", msg).Err(); err != nil {
+		ch := "test-channel"
+		room <- ch
+		log.Println(ch)
+		log.Println(<-start)
+
+		if err := rd.Publish(ctx, ch, msg).Err(); err != nil {
 			log.Println("redis publish err:", err)
 			break
 		}
