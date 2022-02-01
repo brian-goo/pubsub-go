@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/websocket"
@@ -67,8 +68,9 @@ func echo(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Println(string(msg))
 
-		ch := "test-channel"
-		if string(msg) == "test" {
+		chPrefix := strings.Split(string(msg), ":")[0]
+		ch := chPrefix + "-channel"
+		if string(msg) == "test" || string(msg) == "yeah" {
 			room <- ch
 			log.Println(ch)
 			log.Println(<-start)

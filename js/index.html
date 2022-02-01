@@ -12,10 +12,15 @@
             console.log('open')
             ws.send('test')
             setTimeout(() => {
-                setInterval(() => {
-                    ws.send(`hello from clent ${new Date().getTime()}`)
-                }, 1000);
+                ws.send(`test:hello from clent ${new Date().getTime()}`)
             }, 200);
+
+            setTimeout(() => {
+                ws.send('yeah')
+            }, 1000);
+            setTimeout(() => {
+                ws.send(`yeah:hello from clent ${new Date().getTime()}`)
+            }, 1200);
         }
         ws.onclose = e => {
             console.log('close')
