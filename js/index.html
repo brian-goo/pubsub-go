@@ -10,10 +10,12 @@
         const ws = new WebSocket('ws://localhost:5000/ws')
         ws.onopen = e => {
             console.log('open')
-            ws.send(`hello from clent ${new Date().getTime()}`)
-            // setInterval(() => {
-            //     ws.send('hello from clent')
-            // }, 2000);
+            ws.send('test')
+            setTimeout(() => {
+                setInterval(() => {
+                    ws.send(`hello from clent ${new Date().getTime()}`)
+                }, 1000);
+            }, 200);
         }
         ws.onclose = e => {
             console.log('close')

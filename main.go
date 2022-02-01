@@ -31,23 +31,6 @@ func echo(w http.ResponseWriter, r *http.Request) {
 	go func() {
 	loop:
 		for {
-			// channel := <-room
-
-			// sub := rd.Subscribe(ctx, channel)
-			// subCh := sub.Channel()
-			// defer sub.Close()
-
-			// start <- "ok"
-
-			// for msg := range subCh {
-			// 	err := conn.WriteMessage(websocket.TextMessage, []byte(msg.Payload))
-			// 	if err != nil {
-			// 		log.Println("websocket write err:", err)
-			// 		break loop
-			// 	}
-			// }
-
-			// -----------------------------
 			sub := rd.Subscribe(ctx)
 			// subCh := sub.Channel()
 			defer sub.Close()
@@ -85,9 +68,11 @@ func echo(w http.ResponseWriter, r *http.Request) {
 		log.Println(string(msg))
 
 		ch := "test-channel"
-		room <- ch
-		log.Println(ch)
-		log.Println(<-start)
+		if string(msg) == "test" {
+			room <- ch
+			log.Println(ch)
+			log.Println(<-start)
+		}
 
 		if err := rd.Publish(ctx, ch, msg).Err(); err != nil {
 			log.Println("redis publish err:", err)
