@@ -36,26 +36,58 @@ func echo(w http.ResponseWriter, r *http.Request) {
 			// subCh := sub.Channel()
 			defer sub.Close()
 
-			for {
-				select {
-				case channel := <-room:
+			merged := make(chan interface{})
+			go func() {
+				for {
+					select {
+					case x := <-room:
+						merged <- x
+					case y := <-sub.Channel():
+						merged <- y
+					}
+				}
+			}()
+
+			for stream := range merged {
+				switch stream.(type) {
+				case string:
+					channel := stream.(string)
 					log.Println("channel", channel)
 					sub = rd.Subscribe(ctx, channel)
-					// _, err := sub.Receive(ctx)
-					// if err != nil {
-					// 	log.Println("redis sub connection err:", err)
-					// 	break loop
-					// }
 					start <- "ok"
-				case msg := <-sub.Channel():
+				case *redis.Message:
+					msg := stream.(*redis.Message)
 					log.Println("msg", msg)
 					err := conn.WriteMessage(websocket.TextMessage, []byte(msg.Payload))
 					if err != nil {
 						log.Println("websocket write err:", err)
 						break loop
 					}
+				default:
+					log.Println("wront type of stream", stream)
 				}
 			}
+
+			// for {
+			// 	select {
+			// 	case channel := <-room:
+			// 		log.Println("channel", channel)
+			// 		sub = rd.Subscribe(ctx, channel)
+			// 		// _, err := sub.Receive(ctx)
+			// 		// if err != nil {
+			// 		// 	log.Println("redis sub connection err:", err)
+			// 		// 	break loop
+			// 		// }
+			// 		start <- "ok"
+			// 	case msg := <-sub.Channel():
+			// 		log.Println("msg", msg)
+			// 		err := conn.WriteMessage(websocket.TextMessage, []byte(msg.Payload))
+			// 		if err != nil {
+			// 			log.Println("websocket write err:", err)
+			// 			break loop
+			// 		}
+			// 	}
+			// }
 
 		}
 	}()
