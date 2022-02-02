@@ -36,11 +36,15 @@ func echo(w http.ResponseWriter, r *http.Request) {
 			// subCh := sub.Channel()
 			defer sub.Close()
 
+			channels := []string{}
+
 			for {
 				select {
 				case channel := <-room:
 					log.Println("channel", channel)
-					sub = rd.Subscribe(ctx, channel)
+					channels = append(channels, channel)
+					sub = rd.Subscribe(ctx, channels...)
+					log.Println("channels", channels)
 					// _, err := sub.Receive(ctx)
 					// if err != nil {
 					// 	log.Println("redis sub connection err:", err)

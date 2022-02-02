@@ -13,7 +13,7 @@
             ws.send('test')
             setTimeout(() => {
                 ws.send(`test:hello from clent ${new Date().getTime()}`)
-            }, 200);
+            }, 1000);
 
             setTimeout(() => {
                 ws.send('yeah')
